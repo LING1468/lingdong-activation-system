@@ -62,3 +62,4 @@ jobs:
           echo "- **应用名称**: 凌动灯塔激活系统" >> $GITHUB_STEP_SUMMARY
           echo "- **版本**: 1.0.0" >> $GITHUB_STEP_SUMMARY
           echo "- **构建类型**: Debug" >> $GITHUB_STEP_SUMMARY
+Fix workflow: remove npm cache
