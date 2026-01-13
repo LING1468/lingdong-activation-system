@@ -1,65 +1,38 @@
-name: 构建 Android APK
+  name: Build Android APK
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+  on:
+    push:
+      branches: [ main, master ]
+    workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  jobs:
+    build:
+      runs-on: ubuntu-latest
 
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+      steps:
+        - uses: actions/checkout@v4
 
-      - name: 设置 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
+        - uses: actions/setup-node@v4
+          with:
+            node-version: '18'
 
-      - name: 安装依赖
-        run: npm ci
+        - run: npm install
 
-      - name: 构建 Web 应用
-        run: npm run build
+        - run: npm run build
 
-      - name: 设置 Java JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
+        - uses: actions/setup-java@v4
+          with:
+            distribution: 'temurin'
+            java-version: '17'
+            cache: 'gradle'
 
-      - name: 设置 Android SDK
-        uses: android-actions/setup-android@v3
+        - uses: android-actions/setup-android@v3
 
-      - name: 同步 Capacitor Android
-        run: npx cap sync android
+        - run: npx cap sync android
 
-      - name: 构建 Debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+        - run: cd android && ./gradlew assembleDebug --no-daemon
 
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: lingdong-activation-system-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-
-      - name: 构建发布信息
-        if: success()
-        run: |
-          echo "## 构建成功! :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "APK 文件已生成，请从 Artifacts 中下载。" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **应用名称**: 凌动灯塔激活系统" >> $GITHUB_STEP_SUMMARY
-          echo "- **版本**: 1.0.0" >> $GITHUB_STEP_SUMMARY
-          echo "- **构建类型**: Debug" >> $GITHUB_STEP_SUMMARY
-Fix workflow: remove npm cache
+        - uses: actions/upload-artifact@v4
+          with:
+            name: lingdong-activation-system-debug
+            path: android/app/build/outputs/apk/debug/app-debug.apk
