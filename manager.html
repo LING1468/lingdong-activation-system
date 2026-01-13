@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>凌动灯塔激活码管理系统</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 顶部标题栏 -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🔑</span>
+        <span class="logo-text">凌动灯塔激活码管理系统</span>
+      </div>
+      <div class="header-info">
+        <span id="app-version">v1.0.0</span>
+        <span>|</span>
+        <span id="app-platform">Windows</span>
+      </div>
+    </header>
+
+    <!-- 导航栏 -->
+    <nav class="nav">
+      <div class="nav-item active" data-tab="generate">
+        <span>🎲 生成激活码</span>
+      </div>
+      <div class="nav-item" data-tab="database">
+        <span>🗄️ 数据库管理</span>
+      </div>
+      <div class="nav-item" data-tab="import">
+        <span>📁 导入/导出</span>
+      </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 生成激活码标签页 -->
+      <div id="tab-generate" class="tab-content active">
+        <div class="form-section">
+          <h2>生成新激活码</h2>
+          <div class="form-row">
+            <label>批次名称</label>
+            <input type="text" id="batchName" placeholder="例如: 2026年度会员" required>
+          </div>
+          <div class="form-row">
+            <label>激活码类型</label>
+            <select id="codeType">
+              <option value="membership_monthly">📅 月度会员 (30天)</option>
+              <option value="membership_yearly">🌟 年度会员 (365天)</option>
+              <option value="divination_10">🔮 预测次数 x10</option>
+              <option value="divination_50">🔮 预测次数 x50</option>
+              <option value="points_100">💎 积分 x100</option>
+              <option value="points_500">💎 积分 x500</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>生成数量</label>
+            <input type="number" id="quantity" min="1" max="1000" value="10" required>
+          </div>
+          <div class="form-row">
+            <label>有效期（天）</label>
+            <input type="number" id="expiresInDays" min="0" max="3650" placeholder="0=永久">
+          </div>
+          <div class="form-row">
+            <label>备注</label>
+            <textarea id="notes" rows="2" placeholder="可选备注信息"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="generateCodes()">生成激活码</button>
+        </div>
+
+        <!-- 生成结果 -->
+        <div id="result-section" class="result-section" style="display: none;">
+          <h3>生成结果</h3>
+          <div class="result-summary">
+            <div>批次ID: <span id="summary-batchId">-</span></div>
+            <div>生成数量: <span id="summary-count">0</span></div>
+          </div>
+          <div id="codes-container" class="codes-container"></div>
+          <div class="result-actions">
+            <button class="btn btn-success" onclick="saveToDatabase()">💾 保存到数据库</button>
+            <button class="btn btn-secondary" onclick="copyAllCodes()">📋 复制全部</button>
+            <button class="btn btn-secondary" onclick="saveToFile()">💿 保存到文件</button>
+            <button class="btn btn-secondary" onclick="exportAs('csv')">📊 导出CSV</button>
+            <button class="btn btn-secondary" onclick="exportAs('json')">📦 导出JSON</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 数据库管理标签页 -->
+      <div id="tab-database" class="tab-content">
+        <div class="database-section">
+          <h2>数据库管理</h2>
+          <div class="connection-status">
+            <span id="connection-status">⏳ 检测中...</span>
+            <button class="btn btn-small" onclick="testConnection()">测试连接</button>
+          </div>
+
+          <!-- 统计信息 -->
+          <div class="statistics">
+            <div class="stat-card">
+              <div class="stat-value" id="stat-active">0</div>
+              <div class="stat-label">可用</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-used">0</div>
+              <div class="stat-label">已使用</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-expired">0</div>
+              <div class="stat-label">已过期</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-total">0</div>
+              <div class="stat-label">总计</div>
+            </div>
+          </div>
+
+          <!-- 查询过滤 -->
+          <div class="filter-section">
+            <select id="filter-status">
+              <option value="">全部状态</option>
+              <option value="active">可用</option>
+              <option value="used">已使用</option>
+              <option value="expired">已过期</option>
+            </select>
+            <select id="filter-type">
+              <option value="">全部类型</option>
+              <option value="membership_monthly">月度会员</option>
+              <option value="membership_yearly">年度会员</option>
+              <option value="divination_10">预测 x10</option>
+              <option value="divination_50">预测 x50</option>
+              <option value="points_100">积分 x100</option>
+              <option value="points_500">积分 x500</option>
+            </select>
+            <button class="btn btn-primary" onclick="queryDatabase()">查询</button>
+            <button class="btn btn-secondary" onclick="refreshStatistics()">刷新统计</button>
+          </div>
+
+          <!-- 查询结果 -->
+          <div id="database-results" class="database-results"></div>
+        </div>
+      </div>
+
+      <!-- 导入/导出标签页 -->
+      <div id="tab-import" class="tab-content">
+        <div class="import-section">
+          <h2>从文件导入激活码</h2>
+          <p class="hint">支持 .txt 和 .csv 格式的激活码文件</p>
+          <button class="btn btn-primary" onclick="loadFromFile()">选择文件</button>
+
+          <div id="import-result" style="display: none;">
+            <h3>导入结果</h3>
+            <p>成功导入 <span id="import-count">0</span> 个激活码</p>
+            <div id="imported-codes-list" class="codes-container"></div>
+            <button class="btn btn-success" onclick="importToDatabase()">保存到数据库</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="status-bar">
+      <span class="status-text" id="status-text">就绪</span>
+      <span class="status-time" id="status-time"></span>
+    </footer>
+  </div>
+
+  <script src="renderer.cjs"></script>
+</body>
+</html>
